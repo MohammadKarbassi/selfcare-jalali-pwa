@@ -1,25 +1,62 @@
 import React from "react";
-import { brand } from "../lib/brand";
+import { getSeasonForDate, seasonNames } from "../lib/jalali";
 
-export function Shell(props: { userEmail: string; onLogout: () => void; children: React.ReactNode }) {
+export type AppTab = "calendar" | "review" | "experiences" | "settings";
+
+const TABS: { id: AppTab; label: string }[] = [
+  { id: "calendar",    label: "تقویم"    },
+  { id: "review",      label: "مرور"     },
+  { id: "experiences", label: "تجربه‌ها" },
+  { id: "settings",    label: "تنظیمات"  },
+];
+
+export function Shell(props: {
+  userEmail: string;
+  onLogout: () => void;
+  activeTab: AppTab;
+  onTabChange: (tab: AppTab) => void;
+  children: React.ReactNode;
+}) {
+  const season      = getSeasonForDate(new Date());
+  const seasonLabel = seasonNames[season];
+
   return (
-    <div className="container">
-      <div className="header">
-        <div className="brand">
-          <div className="logoDot" />
-          <div>
-            <div style={{ fontWeight: 900 }}>تقویم مراقبت از خود</div>
-            <div className="small">بر پایه‌ی ریتم زندگی زنان ایرانی • {brand.name}</div>
+    <div className={`season-${season}`} style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <div className="app-header">
+        <div className="app-brand">
+          <div className="app-brand-dot">🌸</div>
+          <div className="app-brand-text">
+            <div className="app-brand-name">تقویم مراقبت از خود</div>
+            <div className="app-brand-sub">
+              همراه روزهای تو · {seasonLabel} ۱۴۰۵
+            </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span className="badge">{props.userEmail}</span>
-          <button className="btn btn-ghost" onClick={props.onLogout}>خروج</button>
+
+        <div className="app-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={`app-tab ${props.activeTab === t.id ? "active" : ""}`}
+              onClick={() => props.onTabChange(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+          <span className="badge" style={{ fontSize: 11 }}>
+            {props.userEmail.split("@")[0]}
+          </span>
+          <button className="btn btn-ghost btn-xs" onClick={props.onLogout}>
+            خروج
+          </button>
         </div>
       </div>
-      {props.children}
-      <div className="small" style={{ marginTop: 14 }}>
-        یادآوری پس‌زمینه در PWA محدود است؛ برای نسخه محصولی Push/Backend لازم می‌شود.
+
+      <div className="container">
+        {props.children}
       </div>
     </div>
   );

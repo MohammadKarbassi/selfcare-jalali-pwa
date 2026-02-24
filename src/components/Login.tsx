@@ -3,14 +3,14 @@ import { login } from "../lib/auth";
 
 export function Login(props: { onDone: (email: string) => void }) {
   const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [err, setErr] = useState("");
+  const [pass,  setPass]  = useState("");
+  const [err,   setErr]   = useState("");
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setErr("");
     if (!email.includes("@") || pass.length < 4) {
-      setErr("ایمیل معتبر و رمز حداقل ۴ کاراکتر.");
+      setErr("ایمیل معتبر و رمز حداقل ۴ کاراکتر وارد کن.");
       return;
     }
     const u = login(email, pass);
@@ -18,29 +18,51 @@ export function Login(props: { onDone: (email: string) => void }) {
   }
 
   return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: 520, margin: "40px auto" }}>
-        <div style={{ fontWeight: 900, fontSize: 18 }}>ورود</div>
-        <div className="small" style={{ lineHeight: 1.8, marginTop: 6 }}>
-          نسخه دمو: ورود محلی است (برای نمایش).
+    <div className="login-wrap season-spring">
+      <div className="login-card">
+        <div className="login-logo">🌸</div>
+
+        <div className="login-title">تقویم مراقبت از خود</div>
+        <div className="login-sub">
+          همراه روزهای تو · بر پایه‌ی ریتم زندگی زنان ایرانی
         </div>
 
-        <form onSubmit={onSubmit} className="grid" style={{ marginTop: 12 }}>
-          <input className="input" value={email} onChange={(ev) => setEmail(ev.target.value)} placeholder="ایمیل" />
-          <input className="input" type="password" value={pass} onChange={(ev) => setPass(ev.target.value)} placeholder="رمز" />
+        <form onSubmit={onSubmit} className="login-form">
+          <input
+            className="input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="ایمیل"
+            type="email"
+            autoComplete="email"
+          />
+          <input
+            className="input"
+            type="password"
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+            placeholder="رمز عبور"
+            autoComplete="current-password"
+          />
 
-          {err ? <div className="small" style={{ color: "#b91c1c", fontWeight: 800 }}>{err}</div> : null}
+          {err && <div className="login-err">{err}</div>}
 
           <button
             className="btn btn-ghost"
             type="button"
-            onClick={() => props.onDone(login("demo@khanoumi.local", "1234").email)}
+            onClick={() => props.onDone(login("demo@planner.local", "1234").email)}
           >
             ورود سریع (اکانت دمو)
           </button>
 
-          <button className="btn btn-primary" type="submit">ادامه</button>
+          <button className="btn btn-season" type="submit">
+            ورود
+          </button>
         </form>
+
+        <div className="small" style={{ textAlign: "center", marginTop: 16 }}>
+          داده‌ها فقط روی دستگاه شما ذخیره می‌شوند.
+        </div>
       </div>
     </div>
   );

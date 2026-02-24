@@ -41,7 +41,9 @@ export function jalaliMonthMatrix(anchor: Date) {
 }
 
 export const weekDaysFa = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"] as const;
-export type CalendarView = "month" | "week" | "day";
+export const weekDaysFaShort = ["ش", "ی", "د", "س", "چ", "پ", "ج"] as const;
+
+export type CalendarView = "month" | "week";
 
 export function weekdayIndexSaturdayFirst(date: Date) {
   const dow = date.getDay(); // 0 Sun ... 6 Sat
@@ -61,22 +63,56 @@ export function jalaliWeekRange(anchor: Date) {
   return cells;
 }
 
-export function jalaliDayCell(anchor: Date) {
-  return [{ date: dayjs(anchor).startOf("day").toDate(), inMonth: true }];
-}
-
 export function jalaliPeriodLabel(anchor: Date, view: CalendarView) {
   if (view === "month") {
     const j = toJalali(anchor);
     return `${j.format("MMMM")} ${j.format("YYYY")}`;
   }
 
-  if (view === "week") {
-    const week = jalaliWeekRange(anchor);
-    const start = toJalali(week[0].date);
-    const end = toJalali(week[6].date);
-    return `${start.format("D MMMM")} تا ${end.format("D MMMM YYYY")}`;
-  }
-
-  return toJalali(anchor).format("dddd، D MMMM YYYY");
+  const week = jalaliWeekRange(anchor);
+  const start = toJalali(week[0].date);
+  const end = toJalali(week[6].date);
+  return `${start.format("D MMMM")} تا ${end.format("D MMMM YYYY")}`;
 }
+
+// Approximate day-of-year in Jalali calendar
+// Months 1-6: 31 days each; months 7-11: 30 days; month 12: 29/30
+const JALALI_MONTH_OFFSET = [0, 31, 62, 93, 124, 155, 186, 216, 246, 276, 306, 336];
+
+export function jalaliDayOfYear(date: Date): number {
+  const j = toJalali(date);
+  const month = parseInt(j.format("M"));
+  const day = parseInt(j.format("D"));
+  return JALALI_MONTH_OFFSET[month - 1] + day;
+}
+
+export function jalaliWeekNumber(date: Date): number {
+  return Math.ceil(jalaliDayOfYear(date) / 7);
+}
+
+export function jalaliWeekId(date: Date): string {
+  const j = toJalali(date);
+  const year = j.format("YYYY");
+  const weekNum = jalaliWeekNumber(date);
+  return `${year}-W${weekNum.toString().padStart(2, "0")}`;
+}
+
+export function getSeasonFromJalaliMonth(month: number): "spring" | "summer" | "fall" | "winter" {
+  if (month <= 3) return "spring";
+  if (month <= 6) return "summer";
+  if (month <= 9) return "fall";
+  return "winter";
+}
+
+export function getSeasonForDate(date: Date): "spring" | "summer" | "fall" | "winter" {
+  const j = toJalali(date);
+  const month = parseInt(j.format("M"));
+  return getSeasonFromJalaliMonth(month);
+}
+
+export const seasonNames: Record<string, string> = {
+  spring: "بهار",
+  summer: "تابستان",
+  fall: "پاییز",
+  winter: "زمستان",
+};
