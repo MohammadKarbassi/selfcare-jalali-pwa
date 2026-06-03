@@ -39,7 +39,12 @@ async function findOrCreateContact(name: string, phone: string): Promise<number>
   );
   if (searchRes.ok) {
     const data = await searchRes.json();
-    if (data.payload?.length > 0) return data.payload[0].id;
+    const list = data.payload ?? data;
+    const found = Array.isArray(list) ? list[0] : null;
+    if (found?.id) {
+      console.debug('[chatwoot] contact found via search id=', found.id);
+      return found.id;
+    }
   }
 
   const res = await fetch(`${BASE}/api/v1/accounts/${ACCOUNT}/contacts`, {
@@ -54,14 +59,17 @@ async function findOrCreateContact(name: string, phone: string): Promise<number>
     try { msg = JSON.parse(raw)?.message ?? msg; } catch { /* */ }
     throw new Error(msg);
   }
-  const contact = await res.json();
-  console.debug('[chatwoot] contact created', contact);
+  const raw2 = await res.json();
+  const contact = raw2.payload ?? raw2;
+  console.debug('[chatwoot] contact created', contact, 'id=', contact.id);
+  if (!contact.id) throw new Error('خطا در دریافت شناسه مخاطب');
   return contact.id;
 }
 
 export async function submitTicket(payload: SubmitPayload): Promise<number> {
   const contactId = await findOrCreateContact(payload.name, payload.phone);
 
+  console.debug('[chatwoot] contactId=', contactId, 'inbox=', INBOX_ID, 'account=', ACCOUNT);
   const convBody = {
     inbox_id: INBOX_ID,
     contact_id: contactId,
