@@ -44,7 +44,7 @@ body{
 .btn-primary{ background: var(--kh-magenta); color: #fff; }
 .btn-ghost{ background: transparent; border: 1px solid var(--kh-border); }
 
-.input, textarea{
+.input, textarea, select{
   width: 100%;
   border: 1px solid var(--kh-border);
   border-radius: 14px;
