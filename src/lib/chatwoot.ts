@@ -48,27 +48,37 @@ async function findOrCreateContact(name: string, phone: string): Promise<number>
     body: JSON.stringify({ name, phone_number: e164 }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message ?? `خطا در ثبت مخاطب (${res.status})`);
+    const raw = await res.text();
+    console.error('[chatwoot] contact create error', res.status, raw);
+    let msg = `خطا در ثبت مخاطب (${res.status})`;
+    try { msg = JSON.parse(raw)?.message ?? msg; } catch { /* */ }
+    throw new Error(msg);
   }
-  return (await res.json()).id;
+  const contact = await res.json();
+  console.debug('[chatwoot] contact created', contact);
+  return contact.id;
 }
 
 export async function submitTicket(payload: SubmitPayload): Promise<number> {
   const contactId = await findOrCreateContact(payload.name, payload.phone);
 
+  const convBody = {
+    inbox_id: INBOX_ID,
+    contact_id: contactId,
+    additional_attributes: { subject: payload.subject || payload.category, category: payload.category },
+  };
+  console.debug('[chatwoot] creating conversation', convBody);
   const convRes = await fetch(`${BASE}/api/v1/accounts/${ACCOUNT}/conversations`, {
     method: 'POST',
     headers: h(),
-    body: JSON.stringify({
-      inbox_id: INBOX_ID,
-      contact_id: contactId,
-      additional_attributes: { subject: payload.subject || payload.category, category: payload.category },
-    }),
+    body: JSON.stringify(convBody),
   });
   if (!convRes.ok) {
-    const err = await convRes.json().catch(() => ({}));
-    throw new Error(err?.message ?? `خطا در ثبت تیکت (${convRes.status})`);
+    const raw = await convRes.text();
+    console.error('[chatwoot] conversation error', convRes.status, raw);
+    let msg = `خطا در ثبت تیکت (${convRes.status})`;
+    try { msg = JSON.parse(raw)?.message ?? msg; } catch { /* */ }
+    throw new Error(msg);
   }
   const conv = await convRes.json();
 
