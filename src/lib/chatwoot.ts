@@ -23,21 +23,34 @@ export interface TicketInfo {
   createdAt: number;
 }
 
+function toE164(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('0')) return '+98' + digits.slice(1);
+  if (digits.startsWith('98')) return '+' + digits;
+  return '+' + digits;
+}
+
 async function findOrCreateContact(name: string, phone: string): Promise<number> {
+  const e164 = toE164(phone);
+
   const searchRes = await fetch(
-    `${BASE}/api/v1/accounts/${ACCOUNT}/contacts/search?q=${encodeURIComponent(phone)}&include_contacts=true`,
+    `${BASE}/api/v1/accounts/${ACCOUNT}/contacts/search?q=${encodeURIComponent(e164)}&include_contacts=true`,
     { headers: h() }
   );
   if (searchRes.ok) {
     const data = await searchRes.json();
     if (data.payload?.length > 0) return data.payload[0].id;
   }
+
   const res = await fetch(`${BASE}/api/v1/accounts/${ACCOUNT}/contacts`, {
     method: 'POST',
     headers: h(),
-    body: JSON.stringify({ name, phone_number: phone }),
+    body: JSON.stringify({ name, phone_number: e164 }),
   });
-  if (!res.ok) throw new Error('خطا در ثبت اطلاعات تماس');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? `خطا در ثبت مخاطب (${res.status})`);
+  }
   return (await res.json()).id;
 }
 
@@ -53,7 +66,10 @@ export async function submitTicket(payload: SubmitPayload): Promise<number> {
       additional_attributes: { subject: payload.subject || payload.category, category: payload.category },
     }),
   });
-  if (!convRes.ok) throw new Error('خطا در ثبت تیکت');
+  if (!convRes.ok) {
+    const err = await convRes.json().catch(() => ({}));
+    throw new Error(err?.message ?? `خطا در ثبت تیکت (${convRes.status})`);
+  }
   const conv = await convRes.json();
 
   const msgRes = await fetch(`${BASE}/api/v1/accounts/${ACCOUNT}/conversations/${conv.id}/messages`, {
@@ -65,7 +81,10 @@ export async function submitTicket(payload: SubmitPayload): Promise<number> {
       private: false,
     }),
   });
-  if (!msgRes.ok) throw new Error('خطا در ارسال پیام');
+  if (!msgRes.ok) {
+    const err = await msgRes.json().catch(() => ({}));
+    throw new Error(err?.message ?? `خطا در ارسال پیام (${msgRes.status})`);
+  }
 
   return conv.id;
 }
