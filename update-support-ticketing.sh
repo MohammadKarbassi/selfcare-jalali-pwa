@@ -20,4 +20,8 @@ cp -r "$REPO_DIR/support-ticketing/src/"* "$TARGET/src/"
 mkdir -p "$TARGET/public/assets"
 cp -r "$REPO_DIR/support-ticketing/public/assets/"* "$TARGET/public/assets/" 2>/dev/null || true
 
+# Sync root scripts
+cp "$REPO_DIR/support-ticketing/deploy.sh" "$TARGET/deploy.sh" 2>/dev/null || true
+chmod +x "$TARGET/deploy.sh" 2>/dev/null || true
+
 echo "Done. cd ~/support-ticketing && npm run dev"
