@@ -75,7 +75,7 @@ interface Category { id: string; label: string; Icon: IconComp; }
 
 const CATEGORIES: Category[] = [
   { id: 'delivery',    label: 'ارسال و تحویل سفارش',       Icon: IcTruck   },
-  { id: 'issue',       label: 'اعلام ایراد و مشکل سفارش', Icon: IcWrench  },
+  { id: 'issue',       label: 'ویرایش سفارش',              Icon: IcWrench  },
   { id: 'return',      label: 'درخواست مرجوعی',            Icon: IcReturn  },
   { id: 'mismatch',    label: 'مغایرت سفارش',              Icon: IcReceipt },
   { id: 'damage',      label: 'آسیب کالا یا بسته‌بندی',   Icon: IcPackage },
