@@ -74,15 +74,15 @@ type IconComp = React.FC<{ size?: number }>;
 interface Category { id: string; label: string; Icon: IconComp; }
 
 const CATEGORIES: Category[] = [
-  { id: 'order_track', label: 'پیگیری سفارش',         Icon: IcReceipt },
-  { id: 'return',      label: 'مرجوعی کالا',           Icon: IcReturn  },
-  { id: 'payment',     label: 'مشکل پرداخت',           Icon: IcCard    },
-  { id: 'delivery',    label: 'مشکل ارسال',            Icon: IcTruck   },
-  { id: 'account',     label: 'مشکل حساب کاربری',     Icon: IcUser    },
-  { id: 'product',     label: 'سوال درباره محصول',     Icon: IcTag     },
-  { id: 'technical',   label: 'مشکل فنی اپلیکیشن',   Icon: IcWrench  },
-  { id: 'suggestion',  label: 'پیشنهاد و انتقاد',     Icon: IcChat    },
-  { id: 'other',       label: 'سایر موارد',            Icon: IcDots    },
+  { id: 'delivery',    label: 'ارسال و تحویل سفارش',       Icon: IcTruck   },
+  { id: 'issue',       label: 'اعلام ایراد و مشکل سفارش', Icon: IcWrench  },
+  { id: 'return',      label: 'درخواست مرجوعی',            Icon: IcReturn  },
+  { id: 'mismatch',    label: 'مغایرت سفارش',              Icon: IcReceipt },
+  { id: 'damage',      label: 'آسیب کالا یا بسته‌بندی',   Icon: IcPackage },
+  { id: 'refund',      label: 'تاخیر در بازگشت وجه',      Icon: IcCard    },
+  { id: 'technical',   label: 'خطای سایت',                 Icon: IcWrench  },
+  { id: 'guidance',    label: 'درخواست راهنمایی',          Icon: IcChat    },
+  { id: 'other',       label: 'سایر موارد',                Icon: IcDots    },
 ];
 
 /* ── lifecycle stages ── */
