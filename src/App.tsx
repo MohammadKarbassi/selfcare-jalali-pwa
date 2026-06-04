@@ -6,13 +6,10 @@ import { Login } from "./components/Login";
 import { Shell } from "./components/Shell";
 import { Settings } from "./components/Settings";
 import { JournalReview } from "./components/JournalReview";
-import { SupportPage } from "./components/support/SupportPage";
 import { getUser, logout } from "./lib/auth";
 import type { CalendarView } from "./lib/jalali";
 
 export default function App() {
-  if (window.location.pathname.startsWith("/support")) return <SupportPage />;
-
   const u = getUser();
   const [email, setEmail] = useState<string | null>(u?.email ?? null);
 
