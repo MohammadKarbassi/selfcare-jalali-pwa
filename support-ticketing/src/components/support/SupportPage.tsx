@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { submitTicket, fetchTicketFromApi, formatTicketNumber, decodeTicketNumber, toWesternDigits } from '../../lib/osticket';
+import { submitTicket, formatTicketNumber, toWesternDigits } from '../../lib/osticket';
 
 /* ── inline SVG icons ── */
 function IcUser({ size = 18 }: { size?: number }) {
