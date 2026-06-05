@@ -72,16 +72,7 @@ export async function fetchTicketFromApi(_ticketNumber: string): Promise<TicketI
 }
 
 export function formatTicketNumber(ticketNumber: string): string {
-  try {
-    const parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
-      year: '2-digit', month: '2-digit',
-    }).formatToParts(new Date());
-    const yy = (parts.find(p => p.type === 'year')?.value ?? '').padStart(2, '0');
-    const mm = (parts.find(p => p.type === 'month')?.value ?? '').padStart(2, '0');
-    return `TK-${yy}${mm}${ticketNumber}`;
-  } catch {
-    return `TK-${ticketNumber}`;
-  }
+  return `TK-${ticketNumber}`;
 }
 
 export function decodeTicketNumber(tkNo: string): string {

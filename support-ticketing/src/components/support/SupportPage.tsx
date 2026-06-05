@@ -457,7 +457,7 @@ function TrackPanel({ prefill }: TrackPanelProps) {
   const doSearch = async (val?: string) => {
     const v = toWesternDigits(String(val != null ? val : q).trim().toUpperCase());
     if (!/^TK-\d+$/.test(v)) {
-      setResult({ error: 'شماره تیکت معتبر نیست. مثال: TK-0503123456' });
+      setResult({ error: 'شماره تیکت معتبر نیست. مثال: TK-408340' });
       return;
     }
     setLoading(true);
@@ -492,7 +492,7 @@ function TrackPanel({ prefill }: TrackPanelProps) {
             value={q}
             onChange={e => setQ(e.target.value.toUpperCase())}
             onKeyDown={e => { if (e.key === 'Enter') doSearch(); }}
-            placeholder="TK-0503123456"
+            placeholder="TK-408340"
             style={{ direction: 'ltr', textAlign: 'left' }}
           />
           <button className="track-btn" onClick={() => doSearch()} disabled={loading}>
