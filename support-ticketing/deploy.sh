@@ -8,10 +8,8 @@ REMOTE_DIR="/var/www/support-ticketing"
 
 echo "==> Building..."
 cat > .env.production.local << 'EOF'
-VITE_CHATWOOT_URL=http://95.38.186.86:3000
-VITE_CHATWOOT_TOKEN=2vK5wEQZxWcLPmtQYp7mv5Yx
-VITE_CHATWOOT_ACCOUNT=1
-VITE_CHATWOOT_INBOX=1
+VITE_OSTICKET_URL=/helpdesk
+VITE_OSTICKET_API_KEY=194DDDD52DE91330323A12CEDA9CA4E5
 EOF
 npm run build
 rm .env.production.local
@@ -30,6 +28,12 @@ server {
     charset utf-8;
 
     underscores_in_headers on;
+
+    location /helpdesk/ {
+        proxy_pass http://127.0.0.1:8080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 
     location / {
         try_files $uri $uri/ /index.html;

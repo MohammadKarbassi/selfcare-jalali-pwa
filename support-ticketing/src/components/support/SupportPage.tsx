@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { submitTicket, fetchTicketFromApi, formatTicketNumber, decodeTicketNumber } from '../../lib/chatwoot';
+import { submitTicket, fetchTicketFromApi, formatTicketNumber, decodeTicketNumber } from '../../lib/osticket';
 
 /* ── inline SVG icons ── */
 function IcUser({ size = 18 }: { size?: number }) {
@@ -115,7 +115,7 @@ interface SavedTicket {
   cat: string;
   date: string;
   status: number;
-  convId: number;
+  ticketId: string;
 }
 
 function saveTicket(obj: SavedTicket) {
@@ -246,15 +246,15 @@ function SubmitForm({ onDone }: SubmitFormProps) {
     setSubmitting(true);
     setApiErr('');
     try {
-      const convId = await submitTicket({
+      const ticketId = await submitTicket({
         name: f.fullName.trim(),
         phone: f.phone.trim(),
         orderNo: f.orderNo.trim(),
         category: CATEGORIES.find(c => c.id === f.cat)?.label ?? f.cat,
         desc: f.desc.trim(),
       });
-      const tkNo = formatTicketNumber(convId);
-      saveTicket({ no: tkNo, name: f.fullName.trim(), cat: f.cat, date: jalaliDate(), status: 1, convId });
+      const tkNo = formatTicketNumber(ticketId);
+      saveTicket({ no: tkNo, name: f.fullName.trim(), cat: f.cat, date: jalaliDate(), status: 1, ticketId });
       onDone(tkNo, f.cat);
     } catch (err) {
       setApiErr(err instanceof Error ? err.message : 'خطا در ارسال. دوباره تلاش کنید.');
@@ -456,8 +456,8 @@ function TrackPanel({ prefill }: TrackPanelProps) {
 
   const doSearch = async (val?: string) => {
     const v = String(val != null ? val : q).trim().toUpperCase();
-    if (!/^TK-\d{8}$/.test(v)) {
-      setResult({ error: 'شماره تیکت معتبر نیست. نمونه صحیح: TK-05031000' });
+    if (!/^TK-\d+$/.test(v)) {
+      setResult({ error: 'شماره تیکت معتبر نیست. مثال: TK-123456' });
       return;
     }
     setLoading(true);
@@ -465,29 +465,9 @@ function TrackPanel({ prefill }: TrackPanelProps) {
     try {
       const local = getTicket(v);
       if (local) {
-        // try to refresh status from API
-        try {
-          const apiInfo = await fetchTicketFromApi(local.convId);
-          const statusMap: Record<string, number> = { open: 1, pending: 1, resolved: 3, snoozed: 2 };
-          const fresh = { ...local, status: statusMap[apiInfo.status] ?? local.status };
-          setResult({ ticket: fresh });
-        } catch {
-          setResult({ ticket: local });
-        }
+        setResult({ ticket: local });
       } else {
-        // try decoding and fetching
-        try {
-          const convId = decodeTicketNumber(v);
-          const apiInfo = await fetchTicketFromApi(convId);
-          const statusMap: Record<string, number> = { open: 1, pending: 1, resolved: 3, snoozed: 2 };
-          const synthetic: SavedTicket = {
-            no: v, name: '', cat: '', date: jalaliDate(new Date(apiInfo.createdAt * 1000)),
-            status: statusMap[apiInfo.status] ?? 1, convId,
-          };
-          setResult({ ticket: synthetic });
-        } catch {
-          setResult({ error: 'تیکتی با این شماره یافت نشد.' });
-        }
+        setResult({ error: 'تیکتی با این شماره در این دستگاه یافت نشد.' });
       }
     } finally {
       setLoading(false);
