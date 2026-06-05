@@ -1,31 +1,18 @@
 #!/bin/bash
-# Builds the app and deploys to 95.38.186.86 via SSH.
-# Run from ~/support-ticketing OR from ~/selfcare-jalali-pwa after git pull.
+# Builds the support-ticketing app and deploys to 95.38.186.86 via SSH.
+# Run directly: ./support-ticketing/deploy.sh  (from anywhere in the repo)
 set -e
 
-# Find the directory that has package.json (the real build root)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "$SCRIPT_DIR/package.json" ]; then
-  BUILD_DIR="$SCRIPT_DIR"
-elif [ -f "$SCRIPT_DIR/../package.json" ]; then
-  # Make sure the parent is NOT the selfcare-jalali-pwa monorepo root
-  PARENT_NAME=$(node -p "try{require('$SCRIPT_DIR/../package.json').name}catch(e){''}" 2>/dev/null || echo "")
-  if [ "$PARENT_NAME" = "selfcare-jalali-pwa" ]; then
-    echo "Error: این اسکریپت باید از ~/support-ticketing/ اجرا شود، نه از داخل گیت ریپو."
-    echo "دستور صحیح: cd ~/support-ticketing && ./deploy.sh"
-    exit 1
-  fi
-  BUILD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-else
-  echo "Error: could not find package.json. Run from ~/support-ticketing."
-  exit 1
-fi
-cd "$BUILD_DIR"
+cd "$SCRIPT_DIR"
 
 SERVER="ubuntu@95.38.186.86"
 REMOTE_DIR="/var/www/support-ticketing"
 
-echo "==> Building from $BUILD_DIR ..."
+echo "==> Installing dependencies..."
+npm install --prefer-offline --silent
+
+echo "==> Building..."
 cat > .env.production.local << 'EOF'
 VITE_OSTICKET_URL=/helpdesk
 VITE_OSTICKET_API_KEY=194DDDD52DE91330323A12CEDA9CA4E5
@@ -39,8 +26,7 @@ rsync -az --delete dist/ "$SERVER:$REMOTE_DIR/"
 ssh "$SERVER" "sudo chmod -R 755 $REMOTE_DIR"
 
 echo "==> Deploying status.php to osTicket..."
-SCRIPT_DIR_REAL="$(cd "$(dirname "$0")" && pwd)"
-scp "$SCRIPT_DIR_REAL/server-scripts/status.php" "$SERVER:/tmp/status.php"
+scp "$SCRIPT_DIR/server-scripts/status.php" "$SERVER:/tmp/status.php"
 ssh "$SERVER" "sudo cp /tmp/status.php /var/www/osticket/status.php && sudo chmod 644 /var/www/osticket/status.php"
 
 echo "==> Configuring nginx..."
