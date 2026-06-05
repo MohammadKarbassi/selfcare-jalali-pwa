@@ -35,6 +35,8 @@ export async function submitTicket(form: SubmitForm): Promise<string> {
     body: JSON.stringify({
       name: form.name,
       email,
+      field_1: email,
+      field_2: form.name,
       subject,
       message,
       ip: '0.0.0.0',
