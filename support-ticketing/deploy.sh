@@ -1,12 +1,24 @@
 #!/bin/bash
 # Builds the app and deploys to 95.38.186.86 via SSH.
+# Run from ~/support-ticketing OR from ~/selfcare-jalali-pwa after git pull.
 set -e
-cd "$(dirname "$0")"
+
+# Find the directory that has package.json (the real build root)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$SCRIPT_DIR/package.json" ]; then
+  BUILD_DIR="$SCRIPT_DIR"
+elif [ -f "$SCRIPT_DIR/../package.json" ] && grep -q '"vite"' "$SCRIPT_DIR/../package.json" 2>/dev/null; then
+  BUILD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+  echo "Error: could not find package.json. Run from ~/support-ticketing."
+  exit 1
+fi
+cd "$BUILD_DIR"
 
 SERVER="ubuntu@95.38.186.86"
 REMOTE_DIR="/var/www/support-ticketing"
 
-echo "==> Building..."
+echo "==> Building from $BUILD_DIR ..."
 cat > .env.production.local << 'EOF'
 VITE_OSTICKET_URL=/helpdesk
 VITE_OSTICKET_API_KEY=194DDDD52DE91330323A12CEDA9CA4E5

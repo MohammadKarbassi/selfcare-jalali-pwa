@@ -12,6 +12,12 @@ function api(path: string, opts?: RequestInit) {
   });
 }
 
+export function toWesternDigits(s: string): string {
+  return s
+    .replace(/[٠-٩]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x0660 + 48))
+    .replace(/[۰-۹]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x06F0 + 48));
+}
+
 export interface SubmitForm {
   name: string;
   phone: string;
@@ -66,12 +72,22 @@ export async function fetchTicketFromApi(_ticketNumber: string): Promise<TicketI
 }
 
 export function formatTicketNumber(ticketNumber: string): string {
-  return `TK-${ticketNumber}`;
+  try {
+    const parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
+      year: '2-digit', month: '2-digit',
+    }).formatToParts(new Date());
+    const yy = (parts.find(p => p.type === 'year')?.value ?? '').padStart(2, '0');
+    const mm = (parts.find(p => p.type === 'month')?.value ?? '').padStart(2, '0');
+    return `TK-${yy}${mm}${ticketNumber}`;
+  } catch {
+    return `TK-${ticketNumber}`;
+  }
 }
 
 export function decodeTicketNumber(tkNo: string): string {
-  if (!tkNo.toUpperCase().startsWith('TK-')) throw new Error('شماره تیکت معتبر نیست');
-  const num = tkNo.slice(3).replace(/\D/g, '');
+  const normalized = toWesternDigits(tkNo).toUpperCase();
+  if (!normalized.startsWith('TK-')) throw new Error('شماره تیکت معتبر نیست');
+  const num = normalized.slice(3).replace(/\D/g, '');
   if (!num) throw new Error('شماره تیکت معتبر نیست');
   return num;
 }

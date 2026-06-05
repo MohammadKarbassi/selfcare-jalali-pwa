@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { submitTicket, fetchTicketFromApi, formatTicketNumber, decodeTicketNumber } from '../../lib/osticket';
+import { submitTicket, fetchTicketFromApi, formatTicketNumber, decodeTicketNumber, toWesternDigits } from '../../lib/osticket';
 
 /* ── inline SVG icons ── */
 function IcUser({ size = 18 }: { size?: number }) {
@@ -455,15 +455,15 @@ function TrackPanel({ prefill }: TrackPanelProps) {
   const [loading, setLoading] = useState(false);
 
   const doSearch = async (val?: string) => {
-    const v = String(val != null ? val : q).trim().toUpperCase();
+    const v = toWesternDigits(String(val != null ? val : q).trim().toUpperCase());
     if (!/^TK-\d+$/.test(v)) {
-      setResult({ error: 'شماره تیکت معتبر نیست. مثال: TK-123456' });
+      setResult({ error: 'شماره تیکت معتبر نیست. مثال: TK-0503123456' });
       return;
     }
     setLoading(true);
     setResult(null);
     try {
-      const local = getTicket(v);
+      const local = getTicket(v) ?? getTicket(q.trim().toUpperCase());
       if (local) {
         setResult({ ticket: local });
       } else {
@@ -492,7 +492,7 @@ function TrackPanel({ prefill }: TrackPanelProps) {
             value={q}
             onChange={e => setQ(e.target.value.toUpperCase())}
             onKeyDown={e => { if (e.key === 'Enter') doSearch(); }}
-            placeholder="TK-05031000"
+            placeholder="TK-0503123456"
             style={{ direction: 'ltr', textAlign: 'left' }}
           />
           <button className="track-btn" onClick={() => doSearch()} disabled={loading}>
