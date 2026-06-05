@@ -17,6 +17,7 @@ rm .env.production.local
 echo "==> Uploading to server..."
 ssh "$SERVER" "sudo mkdir -p $REMOTE_DIR && sudo chown ubuntu:ubuntu $REMOTE_DIR"
 rsync -az --delete dist/ "$SERVER:$REMOTE_DIR/"
+ssh "$SERVER" "sudo chmod -R 755 $REMOTE_DIR"
 
 echo "==> Configuring nginx..."
 ssh "$SERVER" "sudo tee /etc/nginx/sites-available/support-ticketing > /dev/null" << 'NGINX'
