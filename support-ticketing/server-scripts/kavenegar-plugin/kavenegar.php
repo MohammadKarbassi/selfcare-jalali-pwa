@@ -7,47 +7,75 @@ class KavenegarPlugin extends Plugin {
 
     var $config_class = 'KavenegarPluginConfig';
 
+    private function log($msg) {
+        $line = date('Y-m-d H:i:s') . ' ' . $msg . "\n";
+        @file_put_contents('/tmp/kavenegar_debug.log', $line, FILE_APPEND);
+    }
+
     function bootstrap() {
-        Signal::connect('ticket.created', array($this, 'onTicketCreated'));
-        // osTicket 1.17 uses 'threadentry.added'
-        Signal::connect('threadentry.added', array($this, 'onThreadEntryAdded'));
+        $this->log('bootstrap called');
+
+        Signal::connect('ticket.created',      array($this, 'onTicketCreated'));
+        Signal::connect('ticket.opened',       array($this, 'onTicketCreated'));
+        Signal::connect('threadentry.added',   array($this, 'onThreadEntryAdded'));
+        Signal::connect('threadentry.created', array($this, 'onThreadEntryAdded'));
+        Signal::connect('model.created',       array($this, 'onModelCreated'));
+    }
+
+    // fallback: catch all model creations to find the right signal
+    function onModelCreated($model) {
+        $class = get_class($model);
+        $this->log("model.created fired: $class");
     }
 
     function onTicketCreated($ticket) {
-        if (!($phone = $this->extractPhone($ticket))) return;
+        $this->log('onTicketCreated fired, class=' . get_class($ticket));
+        $email = '';
+        try { $email = $ticket->getEmail(); } catch (Exception $e) { $email = 'ERROR:'.$e->getMessage(); }
+        $this->log('email=' . $email);
+
+        if (!($phone = $this->extractPhone($email))) {
+            $this->log('phone not extracted from: ' . $email);
+            return;
+        }
 
         $tpl = $this->getConfig()->get('ticket_msg')
             ?: 'تیکت پشتیبانی شما با شماره TK-{number} در خانومی ثبت شد.';
         $msg = str_replace('{number}', $ticket->getNumber(), $tpl);
-
-        $this->sendSms($phone, $msg);
+        $this->log('sending SMS to ' . $phone);
+        $result = $this->sendSms($phone, $msg);
+        $this->log('SMS result: ' . $result);
     }
 
     function onThreadEntryAdded($entry) {
-        // type R = Response (staff reply), M = Message (client)
-        if ($entry->get('type') !== 'R') return;
+        $type = $entry->get('type');
+        $this->log('onThreadEntryAdded fired, type=' . $type);
+        if ($type !== 'R') return;
 
         $thread = $entry->getThread();
-        if (!$thread) return;
+        if (!$thread) { $this->log('no thread'); return; }
 
         $ticket = $thread->getObject();
-        if (!($ticket instanceof Ticket)) return;
+        if (!($ticket instanceof Ticket)) { $this->log('object not Ticket: ' . get_class($ticket)); return; }
 
-        if (!($phone = $this->extractPhone($ticket))) return;
+        $email = '';
+        try { $email = $ticket->getEmail(); } catch (Exception $e) { $email = 'ERROR:' . $e->getMessage(); }
+        $this->log('reply email=' . $email);
+
+        if (!($phone = $this->extractPhone($email))) {
+            $this->log('phone not extracted from: ' . $email);
+            return;
+        }
 
         $tpl = $this->getConfig()->get('reply_msg')
             ?: 'پاسخ جدیدی برای تیکت TK-{number} شما در خانومی ثبت شد.';
         $msg = str_replace('{number}', $ticket->getNumber(), $tpl);
-
-        $this->sendSms($phone, $msg);
+        $this->log('sending reply SMS to ' . $phone);
+        $result = $this->sendSms($phone, $msg);
+        $this->log('SMS result: ' . $result);
     }
 
-    private function extractPhone($ticket) {
-        try {
-            $email = $ticket->getEmail();
-        } catch (Exception $e) {
-            return null;
-        }
+    private function extractPhone($email) {
         if (preg_match('/^(09\d{9})@/i', $email, $m)) {
             return $m[1];
         }
@@ -56,7 +84,7 @@ class KavenegarPlugin extends Plugin {
 
     private function sendSms($receptor, $message) {
         $apiKey = trim($this->getConfig()->get('api_key') ?? '');
-        if (!$apiKey) return;
+        if (!$apiKey) { return 'no api key'; }
 
         $sender = trim($this->getConfig()->get('sender') ?? '');
         $params = array('receptor' => $receptor, 'message' => $message);
@@ -64,24 +92,16 @@ class KavenegarPlugin extends Plugin {
 
         $url = "https://api.kavenegar.com/v1/{$apiKey}/sms/send.json";
 
-        // use curl (more reliable than file_get_contents for HTTPS)
-        if (function_exists('curl_init')) {
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_exec($ch);
-            curl_close($ch);
-        } else {
-            $ctx = stream_context_create(array('http' => array(
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'content' => http_build_query($params),
-                'timeout' => 10,
-            )));
-            @file_get_contents($url, false, $ctx);
-        }
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $result = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        return $err ?: $result;
     }
 }
