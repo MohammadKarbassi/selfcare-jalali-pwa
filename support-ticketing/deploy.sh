@@ -7,7 +7,14 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$SCRIPT_DIR/package.json" ]; then
   BUILD_DIR="$SCRIPT_DIR"
-elif [ -f "$SCRIPT_DIR/../package.json" ] && grep -q '"vite"' "$SCRIPT_DIR/../package.json" 2>/dev/null; then
+elif [ -f "$SCRIPT_DIR/../package.json" ]; then
+  # Make sure the parent is NOT the selfcare-jalali-pwa monorepo root
+  PARENT_NAME=$(node -p "try{require('$SCRIPT_DIR/../package.json').name}catch(e){''}" 2>/dev/null || echo "")
+  if [ "$PARENT_NAME" = "selfcare-jalali-pwa" ]; then
+    echo "Error: این اسکریپت باید از ~/support-ticketing/ اجرا شود، نه از داخل گیت ریپو."
+    echo "دستور صحیح: cd ~/support-ticketing && ./deploy.sh"
+    exit 1
+  fi
   BUILD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 else
   echo "Error: could not find package.json. Run from ~/support-ticketing."
