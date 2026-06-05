@@ -29,6 +29,12 @@ echo "==> Deploying status.php to osTicket..."
 scp "$SCRIPT_DIR/server-scripts/status.php" "$SERVER:/tmp/status.php"
 ssh "$SERVER" "sudo cp /tmp/status.php /var/www/osticket/status.php && sudo chmod 644 /var/www/osticket/status.php"
 
+echo "==> Installing Kavenegar SMS plugin..."
+rsync -az "$SCRIPT_DIR/server-scripts/kavenegar-plugin/" "$SERVER:/tmp/kavenegar-plugin/"
+ssh "$SERVER" "sudo mkdir -p /var/www/osticket/include/plugins/kavenegar \
+  && sudo cp /tmp/kavenegar-plugin/* /var/www/osticket/include/plugins/kavenegar/ \
+  && sudo chmod 644 /var/www/osticket/include/plugins/kavenegar/*"
+
 echo "==> Configuring nginx..."
 ssh "$SERVER" "sudo tee /etc/nginx/sites-available/support-ticketing > /dev/null" << 'NGINX'
 server {
