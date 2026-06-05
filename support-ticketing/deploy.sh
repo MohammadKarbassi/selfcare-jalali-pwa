@@ -1,7 +1,7 @@
 #!/bin/bash
-# Run from ~/support-ticketing on your Mac.
 # Builds the app and deploys to 95.38.186.86 via SSH.
 set -e
+cd "$(dirname "$0")"
 
 SERVER="ubuntu@95.38.186.86"
 REMOTE_DIR="/var/www/support-ticketing"
