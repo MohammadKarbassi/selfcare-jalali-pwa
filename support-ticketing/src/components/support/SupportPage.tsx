@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { submitTicket, formatTicketNumber, toWesternDigits } from '../../lib/osticket';
+import { submitTicket, fetchTicketFromApi, formatTicketNumber, toWesternDigits } from '../../lib/osticket';
 
 /* ── inline SVG icons ── */
 function IcUser({ size = 18 }: { size?: number }) {
@@ -132,6 +132,20 @@ function getTicket(no: string): SavedTicket | null {
     const all = JSON.parse(localStorage.getItem('kh_tickets') || '{}') as Record<string, SavedTicket>;
     return all[no.trim().toUpperCase()] ?? null;
   } catch { return null; }
+}
+
+function updateTicketStatus(no: string, status: number) {
+  try {
+    const all = JSON.parse(localStorage.getItem('kh_tickets') || '{}') as Record<string, SavedTicket>;
+    const key = no.trim().toUpperCase();
+    if (all[key]) { all[key].status = status; localStorage.setItem('kh_tickets', JSON.stringify(all)); }
+  } catch { /* */ }
+}
+
+function osTicketStatusToStage(status: string): number {
+  if (status === 'closed' || status === 'resolved') return 3;
+  if (status === 'answered') return 2;
+  return 1;
 }
 
 /* ── Dropdown ── */
@@ -465,7 +479,18 @@ function TrackPanel({ prefill }: TrackPanelProps) {
     try {
       const local = getTicket(v) ?? getTicket(q.trim().toUpperCase());
       if (local) {
-        setResult({ ticket: local });
+        try {
+          const info = await fetchTicketFromApi(local.ticketId);
+          const newStage = osTicketStatusToStage(info.status);
+          if (newStage !== local.status) {
+            updateTicketStatus(v, newStage);
+            setResult({ ticket: { ...local, status: newStage } });
+          } else {
+            setResult({ ticket: local });
+          }
+        } catch {
+          setResult({ ticket: local });
+        }
       } else {
         setResult({ error: 'تیکتی با این شماره در این دستگاه یافت نشد.' });
       }

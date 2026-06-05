@@ -67,8 +67,15 @@ export interface TicketInfo {
   createdAt: number;
 }
 
-export async function fetchTicketFromApi(_ticketNumber: string): Promise<TicketInfo> {
-  throw new Error('تیکت یافت نشد');
+export async function fetchTicketFromApi(ticketNumber: string): Promise<TicketInfo> {
+  const res = await api(`/api/tickets/${ticketNumber}.json`);
+  if (!res.ok) throw new Error('تیکت یافت نشد');
+  const data = await res.json();
+  return {
+    id: String(data.number || ticketNumber),
+    status: String(data.status || 'open').toLowerCase(),
+    createdAt: data.created ? new Date(data.created).getTime() : Date.now(),
+  };
 }
 
 export function formatTicketNumber(ticketNumber: string): string {
