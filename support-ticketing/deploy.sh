@@ -31,6 +31,11 @@ ssh "$SERVER" "sudo mkdir -p $REMOTE_DIR && sudo chown ubuntu:ubuntu $REMOTE_DIR
 rsync -az --delete dist/ "$SERVER:$REMOTE_DIR/"
 ssh "$SERVER" "sudo chmod -R 755 $REMOTE_DIR"
 
+echo "==> Deploying status.php to osTicket..."
+SCRIPT_DIR_REAL="$(cd "$(dirname "$0")" && pwd)"
+scp "$SCRIPT_DIR_REAL/server-scripts/status.php" "$SERVER:/tmp/status.php"
+ssh "$SERVER" "sudo cp /tmp/status.php /var/www/osticket/status.php && sudo chmod 644 /var/www/osticket/status.php"
+
 echo "==> Configuring nginx..."
 ssh "$SERVER" "sudo tee /etc/nginx/sites-available/support-ticketing > /dev/null" << 'NGINX'
 server {
