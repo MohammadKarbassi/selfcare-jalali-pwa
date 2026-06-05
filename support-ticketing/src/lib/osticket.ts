@@ -22,7 +22,7 @@ export interface SubmitForm {
 
 export async function submitTicket(form: SubmitForm): Promise<string> {
   const digits = form.phone.replace(/\D/g, '');
-  const email = `${digits}@khanoumi.com`;
+  const email = `${digits}@gmail.com`;
   const subject = form.orderNo
     ? `${form.category} — سفارش ${form.orderNo}`
     : form.category;
