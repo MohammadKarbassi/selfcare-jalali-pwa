@@ -68,13 +68,15 @@ export interface TicketInfo {
 }
 
 export async function fetchTicketFromApi(ticketNumber: string): Promise<TicketInfo> {
-  const res = await api(`/api/tickets/${ticketNumber}.json`);
+  const num = ticketNumber.replace(/\D/g, '');
+  const res = await fetch(`${BASE}/status.php?n=${encodeURIComponent(num)}`);
   if (!res.ok) throw new Error('تیکت یافت نشد');
   const data = await res.json();
+  if (data.error) throw new Error('تیکت یافت نشد');
   return {
-    id: String(data.number || ticketNumber),
+    id: String(data.number || num),
     status: String(data.status || 'open').toLowerCase(),
-    createdAt: data.created ? new Date(data.created).getTime() : Date.now(),
+    createdAt: Date.now(),
   };
 }
 

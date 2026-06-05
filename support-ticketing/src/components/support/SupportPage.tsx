@@ -439,7 +439,7 @@ function TicketStatus({ ticket }: TicketStatusProps) {
         </div>
         <span className={`st-badge s${cur}`}>{STAGES[cur].label}</span>
       </div>
-      <div className="st-meta">تاریخ ثبت: {ticket.date}</div>
+      {ticket.date && <div className="st-meta">تاریخ ثبت: {ticket.date}</div>}
       <div className="timeline">
         {STAGES.map((s, i) => (
           <div key={s.key} className={['tl-step', i < cur ? 'done' : i === cur ? 'active' : ''].filter(Boolean).join(' ')}>
@@ -477,22 +477,23 @@ function TrackPanel({ prefill }: TrackPanelProps) {
     setLoading(true);
     setResult(null);
     try {
+      const num = v.slice(3);
       const local = getTicket(v) ?? getTicket(q.trim().toUpperCase());
-      if (local) {
-        try {
-          const info = await fetchTicketFromApi(local.ticketId);
-          const newStage = osTicketStatusToStage(info.status);
-          if (newStage !== local.status) {
-            updateTicketStatus(v, newStage);
-            setResult({ ticket: { ...local, status: newStage } });
-          } else {
-            setResult({ ticket: local });
-          }
-        } catch {
-          setResult({ ticket: local });
+      try {
+        const info = await fetchTicketFromApi(num);
+        const newStage = osTicketStatusToStage(info.status);
+        if (local) {
+          if (newStage !== local.status) updateTicketStatus(v, newStage);
+          setResult({ ticket: { ...local, status: newStage } });
+        } else {
+          setResult({ ticket: { no: v, name: '', cat: '', date: '', status: newStage, ticketId: num } });
         }
-      } else {
-        setResult({ error: 'تیکتی با این شماره در این دستگاه یافت نشد.' });
+      } catch {
+        if (local) {
+          setResult({ ticket: local });
+        } else {
+          setResult({ error: 'تیکتی با این شماره یافت نشد.' });
+        }
       }
     } finally {
       setLoading(false);
